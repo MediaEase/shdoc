@@ -365,6 +365,77 @@ show-msg() {
 }
 ```
 
+
+### `@note`
+
+A note message to highlight important information.
+
+**Example**
+
+```bash
+# @description A function with a note.
+# @note This is a note message.
+note_function() {
+    ...
+}
+```
+
+### `@tip`
+
+A tip message to provide helpful information.
+
+**Example**
+
+```bash
+# @description A function with a tip.
+# @tip This is a tip message.
+tip_function() {
+    ...
+}
+```
+
+### `@important`
+
+An important message to emphasize critical information.
+
+**Example**
+
+```bash
+# @description A function with an important message.
+# @important This is an important message.
+important_function() {
+    ...
+}
+```
+
+### `@warning`
+
+A warning message to caution users about potential issues.
+
+**Example**
+
+```bash
+# @description A function with a warning.
+# @warning This is a warning message.
+warning_function() {
+    ...
+}
+```
+
+### `@caution`
+
+A caution message to advise users to be careful.
+
+**Example**
+
+```bash
+# @description A function with a caution.
+# @caution This is a caution message.
+caution_function() {
+    ...
+}
+```
+
 ## Usage
 
 shdoc has no args and expects a shell script with comments on stdin and will produce markdown as stdout.
@@ -384,7 +455,7 @@ Arch Linux users can install shdoc using package in AUR: [shdoc-git](https://aur
 NOTE: shdoc requires gawk: `apt-get install gawk`
 
 ```bash
-git clone --recursive https://github.com/reconquest/shdoc
+git clone --recursive https://github.com/MediaEase/shdoc
 cd shdoc
 sudo make install
 ```

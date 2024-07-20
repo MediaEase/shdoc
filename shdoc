@@ -53,6 +53,21 @@ BEGIN {
     styles["github", "exitcode", "from"] = "([>!]?[0-9]{1,3}) (.*)"
     styles["github", "exitcode", "to"] = "**\\1**: \\2"
 
+    styles["github", "note", "from"] = ".*"
+    styles["github", "note", "to"] = "NOTE: &"
+    
+    styles["github", "tip", "from"] = ".*"
+    styles["github", "tip", "to"] = "TIP: &"
+    
+    styles["github", "warning", "from"] = ".*"
+    styles["github", "warning", "to"] = "WARNING: &"
+    
+    styles["github", "caution", "from"] = ".*"
+    styles["github", "caution", "to"] = "CAUTION: &"
+    
+    styles["github", "important", "from"] = ".*"
+    styles["github", "important", "to"] = "IMPORTANT: &"
+
     stderr_section_flag = 0
 
     debug_enable = ENVIRON["SHDOC_DEBUG"] == "1"
@@ -460,20 +475,22 @@ function render_docblock(func_name, description, docblock) {
     delete lines
 
     if (section != "") {
-      lines[0] = render("h2", section)
-      if (section_description != "") {
-        push(lines, section_description)
-        # Add empty line to signal end of description.
-        push(lines, "")
-      }
-      section = ""
-      section_description = ""
-      push(lines, render("h3", func_name))
+        lines[0] = render("h2", section)
+        if (section_description != "") {
+            push(lines, section_description)
+            # Add empty line to signal end of description.
+            push(lines, "")
+        }
+        section = ""
+        section_description = ""
+        push(lines, render("h3", func_name))
     } else {
-      lines[0] = render("h3", func_name)
+        lines[0] = render("h3", func_name)
     }
 
     if (description != "") {
+        # Append alerts to the description.
+        description = append_alerts(description, docblock)
         push(lines, description)
         # Add empty line to signal end of description.
         push(lines, "")
@@ -595,6 +612,30 @@ function render_docblock(func_name, description, docblock) {
     return result
 }
 
+function append_alerts(description, docblock) {
+    types_ordered[1] = "note"
+    types_ordered[2] = "tip"
+    types_ordered[3] = "important"
+    types_ordered[4] = "warning"
+    types_ordered[5] = "caution"
+
+    alert_prefix["note"] = "[!NOTE]"
+    alert_prefix["tip"] = "[!TIP]"
+    alert_prefix["important"] = "[!IMPORTANT]"
+    alert_prefix["warning"] = "[!WARNING]"
+    alert_prefix["caution"] = "[!CAUTION]"
+
+    for (i in types_ordered) {
+        type = types_ordered[i]
+        if (type in docblock) {
+            for (j in docblock[type]) {
+                description = description "\n\n> " alert_prefix[type] "\n> " docblock[type][j]
+            }
+        }
+    }
+    return description
+}
+
 function debug(msg) {
     if (debug_enable) {
         print "DEBUG: " msg > debug_file
@@ -636,6 +677,41 @@ function debug(msg) {
     handle_description()
 
     reset()
+}
+
+/^[[:space:]]*# @note/ {
+    debug("→ @note")
+    sub(/^[[:space:]]*# @note /, "")
+    docblock_push("note", $0)
+    next
+}
+
+/^[[:space:]]*# @tip/ {
+    debug("→ @tip")
+    sub(/^[[:space:]]*# @tip /, "")
+    docblock_push("tip", $0)
+    next
+}
+
+/^[[:space:]]*# @warning/ {
+    debug("→ @warning")
+    sub(/^[[:space:]]*# @warning /, "")
+    docblock_push("warning", $0)
+    next
+}
+
+/^[[:space:]]*# @caution/ {
+    debug("→ @caution")
+    sub(/^[[:space:]]*# @caution /, "")
+    docblock_push("caution", $0)
+    next
+}
+
+/^[[:space:]]*# @important/ {
+    debug("→ @important")
+    sub(/^[[:space:]]*# @important /, "")
+    docblock_push("important", $0)
+    next
 }
 
 in_description {
