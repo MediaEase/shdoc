@@ -29,11 +29,11 @@
 # @exitcode 1 If an empty string passed.
 #
 # @see validate()
-# @see [shdoc](https://github.com/reconquest/shdoc).
+# @see [shdoc](https://github.com/MediaEase/shdoc).
 say-hello() {
     if [[ ! "$1" ]]; then
         echo "Oups !" >&2
-        return 1;
+        return 1
     fi
 
     echo "Hello $1"
