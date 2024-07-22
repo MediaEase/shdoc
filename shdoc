@@ -466,6 +466,48 @@ function process_at_option(text) {
     }
 }
 
+# @description Process a text as an @arg tag content.
+# @param text The text to process as an @arg entry.
+# @set docblock["arg"] A docblock for correctly formatted arguments.
+function process_at_arg(text) {
+    debug("→ @arg")
+
+    # Remove '# @arg ' tag.
+    sub(/^[[:blank:]]*#[[:blank:]]+@arg[[:blank:]]+/, "", text)
+
+    # Trim text.
+    text = trim(text)
+
+    # Test if @arg is a numbered item (or $@).
+    if (match(text, /^\$([0-9]+|@)[[:blank:]]+(\S+)[[:blank:]]+(.*)/, contents)) {
+        arg_number = contents[1]
+        arg_type = contents[2]
+        arg_description = contents[3]
+
+        debug("→ → found arg $" arg_number ": " arg_type " - " arg_description)
+
+        # Zero pad argument number for sorting.
+        if (arg_number ~ /^[0-9]+$/) {
+            arg_number = sprintf("%03d", arg_number)
+        }
+
+        # Add arg description to arg docblock.
+        docblock["arg"][arg_number] = "$" contents[1] " " contents[2] " " contents[3]
+
+        # Stop processing current line, and process next line.
+        next
+    } else {
+        # Ignore badly formatted @arg.
+        warn("Invalid format, processed as @option: @arg " text)
+
+        # Process @arg as option, if badly formatted.
+        process_at_option(text)
+
+        # Stop processing current line, and process next line.
+        next
+    }
+}
+
 function render_docblock(func_name, description, docblock) {
     debug("→ render_docblock")
     debug("→ → func_name: [" func_name "]")
@@ -497,40 +539,29 @@ function render_docblock(func_name, description, docblock) {
     }
 
     if ("example" in docblock) {
-        push(lines, render("h4", "Example"))
-        push(lines, render("code", "bash"))
-        push(lines, unindent(docblock["example"]))
-        push(lines, render("/code"))
-        push(lines, "")
-    }
-
-    if ("option" in docblock || "option-bad" in docblock) {
-        push(lines, render("h4", "Options"))
-
-        if ("option" in docblock) {
-            for (i in docblock["option"]) {
-                # Add strong around options, but exclude pipes.
-                term = render("strong", docblock["option"][i]["term"])
-                gsub(/[[:blank:]]+\|[[:blank:]]+/, "** | **", term)
-                # Escape < an >.
-                gsub(/</, "\\<", term)
-                gsub(/>/, "\\>", term)
-                # Render definition list term (dt)
-                item = render("dt", term)
-                push(lines, item)
-                # Render definition list definition (dd)
-                item = render("dd", docblock["option"][i]["definition"] "\n")
-                push(lines, item)
-            }
+        example_count = split(docblock["example"], examples, "\n")
+        if (example_count > 1) {
+            push(lines, render("h4", "Examples"))
+        } else {
+            push(lines, render("h4", "Example"))
         }
-
-        if ("option-bad" in docblock) {
-            for (i in docblock["option-bad"]) {
-                item = render("li", docblock["option-bad"][i])
-                push(lines, item)
+        delete docblock["example"]
+        for (i = 1; i <= example_count; i++) {
+            # Separate command and description if present
+            if (match(examples[i], /^(.*)#(.*)$/, arr)) {
+                example_command = trim(arr[1])
+                example_description = trim(arr[2])
+            } else {
+                example_command = trim(examples[i])
+                example_description = ""
             }
-
-            # Add empty line to signal end of list in markdown.
+            # Add description and command in separate code blocks
+            push(lines, render("code", "bash"))
+            if (example_description != "") {
+                push(lines, "# " example_description)
+            }
+            push(lines, example_command)
+            push(lines, render("/code"))
             push(lines, "")
         }
     }
@@ -611,6 +642,7 @@ function render_docblock(func_name, description, docblock) {
     result = join(lines)
     return result
 }
+
 
 function append_alerts(description, docblock) {
     types_ordered[1] = "note"
@@ -733,11 +765,11 @@ in_description {
 }
 
 /^[[:space:]]*# @section/ {
-  debug("→ @section")
-  sub(/^[[:space:]]*# @section /, "")
-  section = $0
+    debug("→ @section")
+    sub(/^[[:space:]]*# @section /, "")
+    section = $0
 
-  next
+    next
 }
 
 /^[[:space:]]*# @example/ {
@@ -749,18 +781,18 @@ in_description {
     next
 }
 
+# Continue à traiter les lignes d'exemple
 in_example {
-    if (! /^[[:space:]]*#[ ]{1,}/) {
+    if (! /^[[:blank:]]*#[[:blank:]]+/) {
         debug("→ → in_example: leave")
         in_example = 0
     } else {
         debug("→ → in_example: concat")
-        sub(/^[[:space:]]*#/, "")
+        sub(/^[[:blank:]]*#/, "")
 
         docblock_concat("example", $0)
         next
     }
-
 }
 
 # Select @option lines with content.
@@ -902,6 +934,21 @@ match($0, /^([[:blank:]]*#[[:blank:]]+)@(stdin|stdout|stderr)[[:blank:]]+(.*[^[:
     multiple_line_identation_regex = "^" indentation "[[:blank:]]+[^[:blank:]].*$"
 
     # Stop processing current line, and process next line.
+    next
+}
+
+# Séparer la gestion des @arg et des @example
+# Handle @arg lines with content.
+match($0, /^[[:blank:]]*#[[:blank:]]+@arg[[:blank:]]+/) {
+    process_at_arg($0)
+    next
+}
+
+# Handle @example lines with content.
+match($0, /^[[:blank:]]*#[[:blank:]]+@example[[:blank:]]+/) {
+    debug("→ @example")
+
+    in_example = 1
     next
 }
 

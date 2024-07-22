@@ -6,6 +6,7 @@ tests:put input <<EOF
 #
 # @example
 #   some:other:func a b c
+# @example
 #   echo 123
 #
 # @arg \$1 string Some arg.
@@ -24,8 +25,9 @@ tests:put input <<EOF
 # @stderr Stderr description.
 #
 # @see some:other:func()
-# @see Shell documation generator [shdoc](https://github.com/reconquest/shdoc).
+# @see Shell documentation generator [shdoc](https://github.com/reconquest/shdoc).
 some:first:func() {
+}
 EOF
 
 tests:put expected <<EOF
@@ -38,10 +40,13 @@ tests:put expected <<EOF
 Multiline description goes here and
 there
 
-#### Example
+#### Examples
 
 \`\`\`bash
 some:other:func a b c
+\`\`\`
+
+\`\`\`bash
 echo 123
 \`\`\`
 
@@ -77,7 +82,7 @@ _Function has no arguments._
 #### See also
 
 * [some:other:func()](#someotherfunc)
-* Shell documation generator [shdoc](https://github.com/reconquest/shdoc).
+* Shell documentation generator [shdoc](https://github.com/reconquest/shdoc).
 EOF
 
 assert

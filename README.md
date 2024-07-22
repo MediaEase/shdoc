@@ -203,12 +203,24 @@ The name of a section of the file. Can be used to group functions.
 
 ### `@example`
 
-A multiline example of the function usage. Can be specified only alongside the function definition.
+A multiline example of the function usage. Can be specified only alongside the function definition. Multiple examples can be added. Examples commentaries are also supported
 
 **Example**
 ```bash
 # @example
 #    echo "test: $(say-hello World)"
+say-hello() {
+    ...
+}
+```
+
+Or with multiple examples :
+**Example**
+```bash
+# @example
+#    echo "test: $(say-hello World)"
+# @example
+#    echo "test: $(say-hello my Brave)" 
 say-hello() {
     ...
 }

@@ -1,6 +1,5 @@
 #!/bin/bash
-# @file test/testcases/@numbered-arguments.test.sh
-# @author Pierre-Yves Landuré < contact at biapy dot fr >
+# @file tests/testcases/numbered-arguments.test.sh
 # @brief Test cases for @arg keyword.
 # @description
 #   Test these @arg comportements:

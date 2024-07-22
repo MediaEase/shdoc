@@ -62,10 +62,13 @@ _Function has no arguments._
 
 func c
 
-#### Example
+#### Examples
 
 \`\`\`bash
- echo 1
+echo 1
+\`\`\`
+
+\`\`\`bash
 echo 2
 \`\`\`
 

@@ -23,7 +23,6 @@ tests:value() {
 
     __value__="\$(cat "\$(tests:get-stdout-file)")"
     eval \$__variable__=\"\${__value__}\"
-
 }
 EOF
 
@@ -37,13 +36,25 @@ tests:put expected <<EOF
 Same, as \`tests:eval\`, but writes stdout into given variable and
 return stderr as expected.
 
-#### Example
+#### Examples
 
 \`\`\`bash
 _x() {
-    echo "y [\$@]"
+\`\`\`
+
+\`\`\`bash
+echo "y [\$@]"
+\`\`\`
+
+\`\`\`bash
 }
+\`\`\`
+
+\`\`\`bash
 tests:value response _x a b c
+\`\`\`
+
+\`\`\`bash
 tests:assert-equals "\$response" "y [a b c]"
 \`\`\`
 
