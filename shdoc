@@ -138,10 +138,16 @@ function process_function(text) {
             text \
         )
 
+        # Store the alias if exists
+        if (alias_text != "") {
+            aliases[func_name] = alias_text
+            alias_text = ""
+        }
+
         # Add function documentation to output.
         doc = concat(doc, render_docblock(func_name, description, docblock))
         # Add function link to table of contents.
-        toc = concat(toc, render_toc_item(func_name))
+        toc = concat(toc, render_toc_item(func_name, aliases[func_name]))
     }
 
     # Function document has been added to output.
@@ -200,8 +206,13 @@ function render_toc_link(text) {
     return "[" text "](#" url ")"
 }
 
-function render_toc_item(title) {
-    return "* " render_toc_link(title)
+function render_toc_item(func_name, alias) {
+    title = alias != "" ? alias : func_name
+    link = tolower(alias != "" ? alias : func_name)
+    gsub(/[^[:alnum:] _-]/, "", link)
+    gsub(/_/, "", link)
+    gsub(/ /, "-", link)
+    return "* [" title "](#" link ")\n"
 }
 
 function unindent(text) {
@@ -403,10 +414,10 @@ function render_docblock_list(docblock, docblock_name, title) {
 #   - **-o** : single letter short option, signaled by single dash.
 #       Allow for all letters in the A-Z and a-z ranges.
 #   - **-o<argument> : single letter short option with argument.
-#       Argument must be between < and >.
-#   - **--option** : long option, signaled by double dash.
+#       Argument must be between < et >.
+#   - **--option** : long option, signaled par double dash.
 #   - **--option=<argument> : long option with argument.
-#       Argument must be between < and >.
+#       Argument must be between < et >.
 #   - **-o | --option** : long option with short option version.
 #
 #   To achieve this, process_at_option uses a complex regular expression.
@@ -422,14 +433,14 @@ function render_docblock_list(docblock, docblock_name, title) {
 #   # Build regex matching all options
 #   short_or_long_option_regex = sprintf("(%s|%s)", short_option_regex, long_option_regex)
 # 
-#   # Build regex matching multiple options separated by spaces or pipe.
+#   # Build regex matching multiple options separated par spaces or pipe.
 #   all_options_regex = sprintf("(%s%s)+", short_or_long_option_regex, pipe_separator_regex)
 # 
 #   # Build final regex.
 #   optional_arg_regex = sprintf("^(%s)%s$", all_options_regex, description_regex)
 #   ```
 # 
-#   Final regex with non-matching groups (unsupported by gawk).
+#   Final regex with non-matching groups (unsupported par gawk).
 # 
 #   `^((?:(?:-[[:alnum:]](?:[[:blank:]]*<[^>]+>)?|--[[:alnum:]][[:alnum:]-]*(?:(?:=|[[:blank:]]+)<[^>]+>)?)(?:[[:blank:]]*\|?[[:blank:]]+))+)([^[:blank:]|<-].*)?$`
 #
@@ -439,7 +450,7 @@ function render_docblock_list(docblock, docblock_name, title) {
 # @set dockblock["option-bad"] A docblock for badly formated options.
 function process_at_option(text) {
 
-    # Test if @arg is a command-line option description (starting by - or --).
+    # Test if @arg is a command-line option description (starting par - or --).
     if(match(text, /^(((-[[:alnum:]]([[:blank:]]*<[^>]+>)?|--[[:alnum:]][[:alnum:]-]*((=|[[:blank:]]+)<[^>]+>)?)([[:blank:]]*\|?[[:blank:]]+))+)([^[:blank:]|<-].*)?$/, contents)) {
         debug(" → → found correctly formated @option.")
 
@@ -516,6 +527,9 @@ function render_docblock(func_name, description, docblock) {
     # Reset lines variable to allow for a new array creation.
     delete lines
 
+    # Get function alias if available.
+    alias_name = func_name in aliases ? aliases[func_name] : ""
+
     if (section != "") {
         lines[0] = render("h2", section)
         if (section_description != "") {
@@ -525,9 +539,17 @@ function render_docblock(func_name, description, docblock) {
         }
         section = ""
         section_description = ""
-        push(lines, render("h3", func_name))
+        push(lines, render("h3", alias_name != "" ? alias_name : func_name))
+        if (alias_name != "") {
+            push(lines, "> [!NOTE] From function\n> " func_name)
+            push(lines, "")
+        }
     } else {
-        lines[0] = render("h3", func_name)
+        lines[0] = render("h3", alias_name != "" ? alias_name : func_name)
+        if (alias_name != "") {
+            push(lines, "> [!NOTE] From function\n> " func_name)
+            push(lines, "")
+        }
     }
 
     if (description != "") {
@@ -569,7 +591,7 @@ function render_docblock(func_name, description, docblock) {
     if ("arg" in docblock) {
         push(lines, render("h4", "Arguments"))
 
-        # Sort args by indexes (i.e. by argument number.)
+        # Sort args par indexes (i.e. par argument number.)
         asorti(docblock["arg"], sorted_indexes)
         for (i in sorted_indexes) {
             item = docblock["arg"][sorted_indexes[i]]
@@ -642,7 +664,6 @@ function render_docblock(func_name, description, docblock) {
     result = join(lines)
     return result
 }
-
 
 function append_alerts(description, docblock) {
     types_ordered[1] = "note"
@@ -746,6 +767,13 @@ function debug(msg) {
     next
 }
 
+/^[[:space:]]*# @alias/ {
+    debug("→ @alias")
+    sub(/^[[:space:]]*# @alias /, "")
+    alias_text = $0
+    next
+}
+
 in_description {
     if (/^[^[[:space:]]*#]|^[[:space:]]*# @[^d]|^[[:space:]]*[^#]|^[[:space:]]*$/) {
         debug("→ → in_description: leave")
@@ -781,7 +809,7 @@ in_description {
     next
 }
 
-# Continue à traiter les lignes d'exemple
+# Continue processing the example lines
 in_example {
     if (! /^[[:blank:]]*#[[:blank:]]+/) {
         debug("→ → in_example: leave")
@@ -937,7 +965,7 @@ match($0, /^([[:blank:]]*#[[:blank:]]+)@(stdin|stdout|stderr)[[:blank:]]+(.*[^[:
     next
 }
 
-# Séparer la gestion des @arg et des @example
+# Separate the handling of @arg and @example
 # Handle @arg lines with content.
 match($0, /^[[:blank:]]*#[[:blank:]]+@arg[[:blank:]]+/) {
     process_at_arg($0)
@@ -976,6 +1004,11 @@ match($0, /^[[:blank:]]*#[[:blank:]]+@example[[:blank:]]+/) {
 /^[[:blank:]]*\{/ \
     && function_declaration != "" {
     debug("→ multi-line function declaration.")
+    # Store function alias if it exists
+    if (alias_text != "") {
+        aliases[gensub(/.*([a-zA-Z0-9_\-:-\\.]+)[[:blank:]]*\{/, "\\1", "g", function_declaration)] = alias_text
+        alias_text = ""
+    }
     # Process function declaration.
     process_function(function_declaration)
 }

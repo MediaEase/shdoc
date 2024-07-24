@@ -226,6 +226,21 @@ say-hello() {
 }
 ```
 
+### `@alias`
+
+An alias allows you to assign a different name to a function, making the documentation more intuitive and navigable, especially for non-developers. This can be particularly useful for simplifying complex function names or providing a more descriptive name for the function in the documentation.
+
+**Example**
+```bash
+# @alias greet
+# @description Function to greet a user.
+say-hello() {
+    ...
+}
+```
+
+In the example above, the function `say-hello` will appear as `greet` in the documentation, making it easier for non-developers to understand its purpose.
+
 ### `@option`
 
 A description of an option expected to be passed while calling the function.
@@ -457,10 +472,6 @@ $ shdoc < your-shell-script.sh > doc.md
 ```
 
 ## Installation
-
-### Arch Linux
-
-Arch Linux users can install shdoc using package in AUR: [shdoc-git](https://aur.archlinux.org/packages/shdoc-git)
 
 ### Using Git
 
