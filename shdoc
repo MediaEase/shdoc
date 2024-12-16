@@ -123,10 +123,15 @@ function process_function(text) {
             text \
         )
 
+        doc_alias = func_name
+        if ("alias" in docblock) {
+            doc_alias = docblock["alias"]
+        }
+
         # Add function documentation to output.
-        doc = concat(doc, render_docblock(func_name, description, docblock))
+        doc = concat(doc, render_docblock(doc_alias, description, docblock))
         # Add function link to table of contents.
-        toc = concat(toc, render_toc_item(func_name))
+        toc = concat(toc, render_toc_item(doc_alias))
     }
 
     # Function document has been added to output.
@@ -901,6 +906,15 @@ match($0, /^([[:blank:]]*#[[:blank:]]+)@(stdin|stdout|stderr)[[:blank:]]+(.*[^[:
 /^[[:blank:]]*$/ \
     && function_declaration != "" {
     debug("→ waiting for opening bracket.")
+    next
+}
+
+# Select @alias lines with content.
+/^[[:space:]]*#[[:space:]]+@alias[[:space:]]+(.*)/ {
+    debug("→ @alias")
+    alias_text = gensub(/^[[:space:]]*#[[:space:]]+@alias[[:space:]]+/, "", "g", $0)
+    alias_text = trim(alias_text)
+    docblock["alias"] = alias_text
     next
 }
 
