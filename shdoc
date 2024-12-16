@@ -480,11 +480,13 @@ function render_docblock(func_name, description, docblock) {
     }
 
     if ("example" in docblock) {
-        push(lines, render("h4", "Example"))
-        push(lines, render("code", "bash"))
-        push(lines, unindent(docblock["example"]))
-        push(lines, render("/code"))
-        push(lines, "")
+        for (i in docblock["example"]) {
+            push(lines, render("h4", "Example"))
+            push(lines, render("code", "bash"))
+            push(lines, unindent(docblock["example"][i]))
+            push(lines, render("/code"))
+            push(lines, "")
+        }
     }
 
     if ("option" in docblock || "option-bad" in docblock) {
@@ -668,24 +670,23 @@ in_description {
     debug("→ @example")
 
     in_example = 1
-
+    docblock_push("example", "")
 
     next
 }
 
 in_example {
-    if (! /^[[:space:]]*#[ ]{1,}/) {
-        debug("→ → in_example: leave")
-        in_example = 0
-    } else {
+    if (/^[[:space:]]*#[ ]{1,}/) {
         debug("→ → in_example: concat")
         sub(/^[[:space:]]*#/, "")
-
-        docblock_concat("example", $0)
+        docblock_append("example", "\n" $0)
         next
+    } else {
+        debug("→ → in_example: leave")
+        in_example = 0
     }
-
 }
+
 
 # Select @option lines with content.
 /^[[:blank:]]*#[[:blank:]]+@option[[:blank:]]+[^[:blank:]]/ {
