@@ -451,6 +451,15 @@ function process_at_option(text) {
     }
 }
 
+function render_blockquote(type, arr) {
+    push(lines, "> [!" type "]")
+    for (i in arr) {
+        # Each line of the note is prefixed with '>'
+        push(lines, "> " arr[i])
+    }
+    push(lines, "")
+}
+
 function render_docblock(func_name, description, docblock) {
     debug("→ render_docblock")
     debug("→ → func_name: [" func_name "]")
@@ -488,6 +497,28 @@ function render_docblock(func_name, description, docblock) {
             push(lines, "")
         }
     }
+
+    # Render notes, tips, etc.
+    if ("note" in docblock) {
+        render_blockquote("NOTE", docblock["note"])
+    }
+
+    if ("tip" in docblock) {
+        render_blockquote("TIP", docblock["tip"])
+    }
+
+    if ("important" in docblock) {
+        render_blockquote("IMPORTANT", docblock["important"])
+    }
+
+    if ("warning" in docblock) {
+        render_blockquote("WARNING", docblock["warning"])
+    }
+
+    if ("caution" in docblock) {
+        render_blockquote("CAUTION", docblock["caution"])
+    }
+
 
     if ("option" in docblock || "option-bad" in docblock) {
         push(lines, render("h4", "Options"))
@@ -745,6 +776,13 @@ in_example {
     process_at_option(arg_text)
 
     # Stop processing current line, and process next line.
+    next
+}
+
+# Match @note, @tip, @important, @warning, @caution lines with content.
+match($0, /^[[:space:]]*#[[:space:]]+@(note|tip|important|warning|caution)[[:space:]]+(.*)$/, contents) {
+    debug("→ @" contents[1])
+    docblock_push(contents[1], contents[2])
     next
 }
 
