@@ -556,6 +556,56 @@ function render_docblock(func_name, description, docblock) {
         }
     }
 
+    # Render detailed deprecation notice if @deprecated is present
+    if ("deprecated" in docblock) {
+        version_deprecated = docblock["deprecated"]
+        # Remove the "from " prefix to isolate the version
+        sub(/^from[[:space:]]+/, "", version_deprecated)
+        removal_info = "will be removed entirely soon"
+        # If @eol is defined, update removal_info to include the end-of-life version/date
+        if ("eol" in docblock) {
+            removal_info = "and will be removed entirely in **" docblock["eol"] "**"
+        }
+        # Use the function name from `func_name` or `doc_alias`. We assume doc_alias holds the final function name.
+        # If you have doc_alias from earlier steps, make sure it's accessible here. 
+        # If not, store it in the docblock or render_docblock parameters.
+        deprecated_func_name = func_name
+        # If you have alias support, you might have passed doc_alias as the function name.
+        # In that case, replace `func_name` below with that alias variable.
+        push(lines, "> [!WARNING]")
+        push(lines, "> **Deprecation Notice:**  ")
+        push(lines, ">  ")
+        push(lines, "> The `" deprecated_func_name "` command has been **deprecated** as of **" version_deprecated "** " removal_info ".  ")
+        push(lines, ">  ")
+        push(lines, "> **What does this mean?**  ")
+        
+        # Add one trailing space after end-of-life.
+        push(lines, "> - The `" deprecated_func_name "` command will continue to be available until its end-of-life. ") 
+        
+        # Add one trailing space after accessible.
+        push(lines, ">   After that date, it will no longer be accessible. ")
+        
+        # Add two trailing spaces after performance.
+        if ("replacement" in docblock) {
+            push(lines, ">   However, you can use `" docblock["replacement"] "`, which offers improved functionality and better performance.  ")
+        } else {
+            # If no replacement, just end the line similarly:
+            push(lines, ">   However, you can replace it with another command.  ")
+        }
+        
+        push(lines, ">  ")
+        push(lines, "> **Removal Timeline:**  ")
+        
+        # Add two trailing spaces after v2.4
+        push(lines, "> - Deprecated in: " version_deprecated "  ")
+        
+        if ("eol" in docblock) {
+            push(lines, "> - Planned removal: " docblock["eol"])
+        }
+        
+        push(lines, "")
+    }
+
     if ("arg" in docblock) {
         push(lines, render("h4", "Arguments"))
 
@@ -797,6 +847,34 @@ match($0, /^[[:space:]]*#[[:space:]]+@(note|tip|important|warning|caution)[[:spa
     docblock["noargs"] = 1
 
     # Stop processing current line, and process next line.
+    next
+}
+
+# @deprecated lines
+/^[[:space:]]*#[[:space:]]+@deprecated[[:space:]]+(.*)/ {
+    debug("→ @deprecated")
+    line = $0
+    # Remove the leading comment, @deprecated tag, and spaces
+    sub(/^[[:space:]]*#[[:space:]]+@deprecated[[:space:]]+/, "", line)
+    docblock["deprecated"] = trim(line)
+    next
+}
+
+# @replacement lines
+/^[[:space:]]*#[[:space:]]+@replacement[[:space:]]+(.*)/ {
+    debug("→ @replacement")
+    line = $0
+    sub(/^[[:space:]]*#[[:space:]]+@replacement[[:space:]]+/, "", line)
+    docblock["replacement"] = trim(line)
+    next
+}
+
+# @eol lines
+/^[[:space:]]*#[[:space:]]+@eol[[:space:]]+(.*)/ {
+    debug("→ @eol")
+    line = $0
+    sub(/^[[:space:]]*#[[:space:]]+@eol[[:space:]]+/, "", line)
+    docblock["eol"] = trim(line)
     next
 }
 
