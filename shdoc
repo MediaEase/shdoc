@@ -2,7 +2,7 @@
 # vim: ft=awk ts=4 sw=4
 
 BEGIN {
-    shdoc_version = "1.6.0"
+    shdoc_version = "1.8.0"
     for (i=1; i<ARGC; i++) {
         if (ARGV[i] == "version" || ARGV[i] == "v") {
             printf shdoc_version
@@ -13,6 +13,8 @@ BEGIN {
     if (! style) {
         style = "github"
     }
+
+    load_shdocfile()
 
     styles["github", "h1", "from"] = ".*"
     styles["github", "h1", "to"] = "# &\n"
@@ -147,6 +149,33 @@ function process_function(text) {
 
     # Process next line.
     next
+}
+
+function load_shdocfile() {
+    shdocfile = "./Shdocfile"  # Explicitly look in the current folder
+    # Check if Shdocfile exists, silently skip if not found
+    if (system("[ -f " shdocfile " ]") == 0) {
+        debug("Loading Shdocfile from current directory.")
+        while ((getline line < shdocfile) > 0) {
+            if (line ~ /^[[:space:]]*$/ || line ~ /^#/) continue  # Skip comments/blank lines
+            split(line, kv, "=")
+            key = trim(kv[1])
+            value = trim(kv[2])
+            if (key && value) {
+                config[key] = value
+            }
+        }
+        close(shdocfile)
+    } else {
+        debug("No Shdocfile found in the current directory; running with default behavior.")
+    }
+}
+
+# Function: Append footer if configured
+function append_footer() {
+    if ("footer" in config) {
+        print "---\n" config["footer"]
+    }
 }
 
 function render(type, text) {
@@ -1054,4 +1083,5 @@ END {
     print doc
 
     ## TODO: add examples section
+    append_footer()
 }
