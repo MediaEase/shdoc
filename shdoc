@@ -2,13 +2,20 @@
 # vim: ft=awk ts=4 sw=4
 
 BEGIN {
+    shdoc_version = "1.6.0"
+    for (i=1; i<ARGC; i++) {
+        if (ARGV[i] == "version" || ARGV[i] == "v") {
+            printf shdoc_version
+            exit 0
+        }
+    }
+
     if (! style) {
         style = "github"
     }
 
     styles["github", "h1", "from"] = ".*"
     styles["github", "h1", "to"] = "# &\n"
-
     styles["github", "h2", "from"] = ".*"
     styles["github", "h2", "to"] = "## &\n"
 
