@@ -2,7 +2,7 @@
 # vim: ft=awk ts=4 sw=4
 
 BEGIN {
-    shdoc_version = "1.8.0"
+    shdoc_version = "1.9.0"
     for (i=1; i<ARGC; i++) {
         if (ARGV[i] == "version" || ARGV[i] == "v") {
             printf shdoc_version
@@ -1023,6 +1023,16 @@ match($0, /^([[:blank:]]*#[[:blank:]]+)@(stdin|stdout|stderr)[[:blank:]]+(.*[^[:
     next
 }
 
+# Parse @version annotation
+/^[[:space:]]*#[[:space:]]+@version[[:space:]]+(.*)/ {
+    debug("→ @version")
+    line = $0
+    sub(/^[[:space:]]*#[[:space:]]+@version[[:space:]]+/, "", line)
+    version = trim(line)
+    debug("→ Extracted version: [" version "]")
+    next
+}
+
 # Select @alias lines with content.
 /^[[:space:]]*#[[:space:]]+@alias[[:space:]]+(.*)/ {
     debug("→ @alias")
@@ -1060,9 +1070,14 @@ END {
     debug("→ → file_title:       [" file_title "]")
     debug("→ → file_brief:       [" file_brief "]")
     debug("→ → file_description: [" file_description "]")
+    debug("→ → version:          [" version "]")
     debug("→ END }")
 
     if (file_title != "") {
+        if ("version_in_name" in config && config["version_in_name"] == "true" && version != "") {
+            file_title = file_title " (v" version ")"
+        }
+        debug("→ Updated file_title: [" file_title "]")
         print render("h1", file_title)
 
         if (file_brief != "") {
