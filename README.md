@@ -1,9 +1,9 @@
-# shdoc
+# shdoc-advanced
 
-shdoc is a documentation generator for bash/zsh/sh for generating API documentation in Markdown from
+shdoc-advanced is a documentation generator for bash/zsh/sh for generating API documentation in Markdown from
 shell scripts source.
 
-shdoc parses [annotations](#features) in the beginning of a given file and alongside function
+shdoc-advanced parses [annotations](#features) in the beginning of a given file and alongside function
 definitions, and creates a markdown file with ready to use documentation.
 
 ## Index
@@ -60,7 +60,7 @@ _Output_: [examples/readme-example.md](examples/readme-example.md)<br/><br/>
 # @exitcode 1 If an empty string passed.
 #
 # @see validate()
-# @see [shdoc](https://github.com/reconquest/shdoc).
+# @see [shdoc-advanced](https://github.com/MediaEase/shdoc-advanced).
 say-hello() {
     if [[ ! "$1" ]]; then
         echo "Oups !" >&2
@@ -135,7 +135,7 @@ echo "test: $(say-hello World)"
 #### See also
 
 * [validate()](#validate)
-* [shdoc](https://github.com/reconquest/shdoc).
+* [shdoc-advanced](https://github.com/MediaEase/shdoc-advanced).
 
 ~~~
 
@@ -204,6 +204,7 @@ The name of a section of the file. Can be used to group functions.
 ### `@example`
 
 A multiline example of the function usage. Can be specified only alongside the function definition.
+You can have as many @example you want.
 
 **Example**
 ```bash
@@ -365,33 +366,170 @@ show-msg() {
 }
 ```
 
+### `@deprecated`
+
+The `@deprecated` annotation marks a function as deprecated and adds a deprecation notice to the generated documentation. Additional annotations like `@replacement` and `@eol` can specify a replacement function and the end-of-life date/version.
+
+**Example**
+
+```bash
+# @description This function is deprecated.
+# @deprecated from 1.0.0
+# @replacement new-function
+# @eol 2.0.0
+deprecated-function() {
+    ...
+}
+```
+
+**Output**
+
+This function is deprecated.
+
+> [!WARNING]
+> **Deprecation Notice:**  
+> The `deprecated-function` command has been **deprecated** as of **1.0.0** and will be removed entirely in **2.0.0**.  
+> **Replacement:** Use `new-function` instead.
+
+### `@alias`
+
+The `@alias` annotation allows defining an alternative name for a function. The alias is used in the generated documentation instead of the original function name.
+
+## Example
+
+```bash
+# @description Function to greet a user.
+# @alias greet
+say-hello() {
+    echo "Hello!"
+}
+```
+
+**Output**
+```bash
+### greet
+
+Function to greet a user.
+```
+
+### Github Alerts
+
+The GitHub alerts feature enhances your documentation by adding specific callouts or highlights in the form of annotated blocks. These callouts can be used to emphasize important information, provide warnings, tips, or even draw attention to specific issues.
+
+Supported annotations:
+- `@note` – General notes or observations.
+- `@tip` – Useful tips or suggestions.
+- `@important` – Highlights crucial information.
+- `@warning` – Warns the user of potential issues or important considerations.
+- `@caution` – Alerts users to proceed carefully.
+
+## Example
+
+```bash
+# @description Processes a sensitive operation.
+# @warning Ensure you have a backup before proceeding.
+# @caution This function can overwrite important data if used incorrectly.
+process-sensitive-operation() {
+    echo "Processing..."
+}
+```
+
+**Output**
+```
+### process-sensitive-operation
+
+Processes a sensitive operation.
+```
+> [!WARNING]
+> **Warning:** Ensure you have a backup before proceeding.
+
+> [!CAUTION]
+> **Caution:** This function can overwrite important data if used incorrectly.
+
+# Configuration Reference
+
+The `Shdocfile` allows you to customize the behavior of `shdoc-advanced`. It is a simple configuration file where you can set options to enhance the generated documentation.
+
+## Supported Options
+
+### `version_in_name`
+
+Controls whether the version of the script is appended to its title in the generated documentation. The version is extracted from the `@version` annotation.
+
+**Example Shdocfile**
+
+```bash
+version_in_name=true
+```
+
+**Input script**
+```bash
+# @file my_script.sh
+# @version 2.3.1
+```
+**Generated Output**
+`# my_script.sh (v2.3.1)`
+
+If `version_in_name` is not set or is `false`, the title does not include the version:
+`# my_script.sh`
+
+**Generated Output**
+`# my_script.sh (v2.3.1)`
+
+### `footer`
+
+Adds a footer at the end of the generated documentation. This is useful for branding or providing additional context.
+
+**Example Shdocfile**
+
+```bash
+footer=Generated using shdoc-advanced v1.8.0
+```
+
+**Generated Output**
+```bash
+---
+Generated using shdoc-advanced v1.8.0
+```
+
+If `footer` is not set, no footer will be added.
+
+
 ## Usage
 
-shdoc has no args and expects a shell script with comments on stdin and will produce markdown as stdout.
+To generate documentation, `shdoc-advanced` expects a shell script with comments on stdin and will produce markdown as stdout.
 
 ```bash
 $ shdoc < your-shell-script.sh > doc.md
 ```
 
+### Version
+
+The `version` or `v` flag provides a quick way to print the current version of `shdoc-advanced`.
+
+Usage:
+
+```bash
+$ shdoc version
+1.8.0
+
+$ shdoc v
+1.8.0
+```
+
+
 ## Installation
-
-### Arch Linux
-
-Arch Linux users can install shdoc using package in AUR: [shdoc-git](https://aur.archlinux.org/packages/shdoc-git)
 
 ### Using Git
 
-NOTE: shdoc requires gawk: `apt-get install gawk`
+> [!NOTE]
+> shdoc-advanced requires gawk: `apt-get install gawk`
 
 ```bash
-git clone --recursive https://github.com/reconquest/shdoc
+git clone --recursive https://github.com/MediaEase/shdoc-advanced
 cd shdoc
 sudo make install
 ```
-
-### Others
-
-Unfortunately, there are no packages of shdoc for other distros, but we're looking for contributions.
 
 ## Examples
 
